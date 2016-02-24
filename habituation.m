@@ -18,6 +18,28 @@ white = WhiteIndex(screenNumber);
 black = BlackIndex(screenNumber);
 
 %----------------------------------------------------------------------
+%                       Set Up Sound
+%----------------------------------------------------------------------
+
+% Initialize Sounddriver
+InitializePsychSound(0);
+count = PsychPortAudio('GetOpenDeviceCount');
+devices = PsychPortAudio('GetDevices');
+
+nrchannels = 2;
+freq = 35000;
+repetitions = 1;
+beepLengthSecs = .25;
+beepPauseTime = 1;
+startCue = 0;
+waitForDeviceStart = 1;
+%trydifferent device ID's
+pahandle = PsychPortAudio('Open', 2, 1, 1, freq, nrchannels);
+PsychPortAudio('Volume', pahandle, 0.5);
+myBeep = MakeBeep(500, beepLengthSecs, freq);
+PsychPortAudio('FillBuffer', pahandle, [myBeep; myBeep]);
+
+%----------------------------------------------------------------------
 %                       Keyboard information
 %----------------------------------------------------------------------
 
@@ -32,9 +54,9 @@ leftKey = KbName('LeftArrow');
 %                       Parameters and Data
 %----------------------------------------------------------------------
 
-numTrials = 100 ;
-trial_type = randi(4, numTrials, 'uint32');
-ISI_vec = rand([1 numTrials + 1]);
+numTrials = 100;
+%trial_type = 2;
+ISI_vec = .3*ones(1,numTrials + 1);
 respMat = nan(3, numTrials);
 
 % Open an on screen window using PsychImaging and color it black.
@@ -42,7 +64,7 @@ respMat = nan(3, numTrials);
 % Measure the vertical refresh rate of the monitor
 ifi = Screen('GetFlipInterval', window);
 % Length of time and number of frames we will use for each drawing test
-numSecs = .01;
+numSecs = .1; 
 numFrames = round(numSecs / ifi);
 ISIFrames = round(ISI_vec ./ ifi);
 waitframes = 1;
@@ -66,110 +88,76 @@ numspoutone = 0;
 numspouttwo = 0;
 
 for trial = 1:numTrials
+    trial
     
     if trial == 1
         DrawFormattedText(window, 'Press Any Key to Begin', 'center', 'center', white );
         vbl = Screen('Flip', window);
         KbStrokeWait;
     end
-        Screen('FillRect', window, [0 0 0]);
-        vbl = Screen('Flip', window);
     
-    awaitingResponse = true;
-               
-    while (awaitingResponse == true)
+    Screen('FillRect', window, [0 0 0]);
+    vbl = Screen('Flip', window);
+    
         
-        if choice.get_lick_state() ~= lick_state
-           lick_state = choice.get_lick_state();
-           awaitingResponse = false;
-        end
+    choice.set_trial_out(1)
+    PsychPortAudio('Start', pahandle, repetitions, startCue, waitForDeviceStart);    
+    pause(.5)
+    PsychPortAudio('Stop', pahandle);
+    pause(.5)
 
-        if choice.is_licking(2)
-           choice.dose(2)
-           awaitingResponse = false;
-           numspoutone = numspoutone + 1;
-           
-           vbl = Screen('Flip', window);
-            for frame = 1:numFrames
+    vbl = Screen('Flip', window);
+    for frame = 1:numFrames
 
-                % draw the rectangle
-                Screen('FillRect', window, rectColor, centeredRect);
+        % draw the rectangle
+        Screen('FillRect', window, rectColor, centeredRect);
 
-                % Tell PTB no more drawing commands will be issued until the next flip
-                Screen('DrawingFinished', window); 
+        % Tell PTB no more drawing commands will be issued until the next flip
+        Screen('DrawingFinished', window); 
 
-                % Flip to the screen
-                vbl = Screen('Flip', window, vbl + (waitframes - 0.5) * ifi);
+        % Flip to the screen
+        vbl = Screen('Flip', window, vbl + (waitframes - 0.5) * ifi);
 
-            end
-            vbl = Screen('Flip', window);     
-            for frame = 1:ISIFrames(trial)
-                %draw black screen     
-                Screen('FillRect', window, [0 0 0]);
-
-                %no more drawing commands until next filp
-                Screen('DrawingFinished', window);
-
-                %Flip to screen
-                vbl = Screen('Flip', window, vbl + (waitframes - 0.5)*ifi);
-            end
-            vbl = Screen('Flip', window);   
-        end
-
-        if choice.is_licking(1)
-           choice.dose(1)
-            awaitingResponse = false;
-            numspouttwo = numspouttwo + 1;
-            
-            vbl = Screen('Flip', window);
-            for frame = 1:numFrames
-
-                % draw the rectangle
-                Screen('FillRect', window, rectColor, centeredRect);
-
-                % Tell PTB no more drawing commands will be issued until the next flip
-                Screen('DrawingFinished', window); 
-
-                % Flip to the screen
-                vbl = Screen('Flip', window, vbl + (waitframes - 0.5) * ifi);
-
-            end
-            vbl = Screen('Flip', window);    
-            for frame = 1:ISIFrames(trial)
-                %draw black screen     
-                Screen('FillRect', window, [0 0 0]);
-
-                %no more drawing commands until next filp
-                Screen('DrawingFinished', window);
-
-                %Flip to screen
-                vbl = Screen('Flip', window, vbl + (waitframes - 0.5)*ifi);
-            end
-            vbl = Screen('Flip', window);
-            for frame = 1:numFrames
-
-                % draw the rectangle
-                Screen('FillRect', window, rectColor, centeredRect);
-
-                % Tell PTB no more drawing commands will be issued until the next flip
-                Screen('DrawingFinished', window); 
-
-                % Flip to the screen
-                vbl = Screen('Flip', window, vbl + (waitframes - 0.5) * ifi);
-
-            end
-            vbl = Screen('Flip', window);        
-        end
-            % Check the keyboard. The person should press the escape key to
-            % exit
-
-        [keyIsDown,secs, keyCode] = KbCheck;
-        if keyCode(escapeKey)
-            ShowCursor;
-            sca;
-            return
-        end 
     end
+    vbl = Screen('Flip', window);    
+    for frame = 1:ISIFrames(trial)
+        %draw black screen     
+        Screen('FillRect', window, [0 0 0]);
+
+        %no more drawing commands until next filp
+        Screen('DrawingFinished', window);
+
+        %Flip to screen
+        vbl = Screen('Flip', window, vbl + (waitframes - 0.5)*ifi);
+    end
+    vbl = Screen('Flip', window);
+    for frame = 1:numFrames
+
+        % draw the rectangle
+        Screen('FillRect', window, rectColor, centeredRect);
+
+        % Tell PTB no more drawing commands will be issued until the next flip
+        Screen('DrawingFinished', window); 
+
+        % Flip to the screen
+        vbl = Screen('Flip', window, vbl + (waitframes - 0.5) * ifi);
+
+    end
+    vbl = Screen('Flip', window); 
+    
+    pause(1)
+    
+    choice.set_response_window(1);
+    PsychPortAudio('Start', pahandle, repetitions, startCue, waitForDeviceStart);    
+    pause(.1)
+    PsychPortAudio('Stop', pahandle);
+    choice.dose(2)
+    pause(2)
+    choice.set_response_window(0);
+    choice.set_trial_out(0);
+    
+    
+    pause(3)    
 end
 
 Screen('Close?')

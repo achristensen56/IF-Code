@@ -1,4 +1,4 @@
-% Clear the workspace and the screen
+ % Clear the workspace and the screen
 close all;
 clear all;
 sca; 
@@ -12,8 +12,8 @@ rand('seed', sum(100*clock));
 InitializePsychSound(1);
 nrchannels = 2;
 freq = 30000;
-repetitions = 1;
-beepLengthSecs = .01 ;
+repetitions = 1; 
+beepLengthSecs = .02 ;
 beepPauseTime = 1;
 startCue = 0;
 waitForDeviceStart = 1;
@@ -48,9 +48,9 @@ rightKey = KbName('RightArrow');
 %                       Parameters and Data
 %----------------------------------------------------------------------
 
-numTrials = 50;
+numTrials = 5;
 trial_type = randi(4, numTrials, 'uint32');
-ISI_vec = rand([1 numTrials + 1])/10 ;
+ISI_vec = rand([1 numTrials + 1])/12 ;
 respMat = nan(3, numTrials);
 
 % Open an on screen window using PsychImaging and color it black.
@@ -58,9 +58,9 @@ respMat = nan(3, numTrials);
 % Measure the vertical refresh rate of the monitor
 ifi = Screen('GetFlipInterval', window);
 % Length of time and number of frames we will use for each drawing test
-numSecs = .01;
+numSecs = .02;
 numFrames = round(numSecs / ifi);
-ISIFrames = round(ISI_vec ./ ifi);
+ISIFrames = round(ISI_vec ./ ifi)/10 ;
 waitframes = 1;
 
 %Make the stimulus rectangle

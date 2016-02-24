@@ -15,17 +15,19 @@ classdef ForcedChoice2 < handle
             % JP1
             p.corridor(1).step = 53;  % Dir is expected to be pin "step"-2
             p.corridor(1).dose = 49;
-            p.corridor(1).dose_duration = 40;
+            p.corridor(1).dose_duration = 200;
             p.corridor(1).lick = 47;
+            
             
             
             % JP3
             p.corridor(2).step = 29;
             p.corridor(2).dose = 25;
-            p.corridor(2).dose_duration = 40; % ms
+            p.corridor(2).dose_duration = 100; % ms
             p.corridor(2).lick = 23;
             
-
+            p.trial_out = 22;
+            p.response_window = 24;
             
             p.num_corridors = length(p.corridor);
             
@@ -43,6 +45,9 @@ classdef ForcedChoice2 < handle
                 choice.a.pinMode(corridor.dose, 'output');
                 choice.a.pinMode(corridor.lick, 'input');
             end
+            
+            choice.a.pinMode(choice.params.trial_out, 'output');
+            choice.a.pinMode(choice.params.response_window, 'output');
              
         end        
         
@@ -52,8 +57,8 @@ classdef ForcedChoice2 < handle
         end % dose
         
         function lick = is_licking(choice, corridor_ind)
-            lick_pin = choice.params.corridor(corridor_ind).lick;
-            val = choice.a.digitalRead(lick_pin);
+            %lick_pin = choice.params.corridor(corridor_ind).lick;
+            val = choice.a.roundTrip(corridor_ind);
             lick = (val == 0); % HW pin goes low for lick
         end % is_licking
         
@@ -64,5 +69,11 @@ classdef ForcedChoice2 < handle
             end
         end % get_lick_state
        
+        function set_trial_out(choice, val)
+            choice.a.digitalWrite(choice.params.trial_out, val);
+        end
+        function set_response_window(choice, val)
+            choice.a.digitalWrite(choice.params.response_window, val);
+        end
     end
 end

@@ -1593,6 +1593,7 @@ classdef arduino < handle
             
             %%%%%%%%%%%%%%%%%%%%%%%%% ARGUMENT CHECKING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
+            
             % check arguments if a.chkp is true
             if a.chkp,
                 
@@ -1670,7 +1671,7 @@ classdef arduino < handle
         end % rotate_stepper
         
         % round trip
-        function val=roundTrip(a,byte)
+        function val=roundTrip(a,lick_port)
             
             % roundTrip(a,byte); sends something to the arduino and back
             % The first argument, a, is the arduino object.
@@ -1690,6 +1691,15 @@ classdef arduino < handle
             %
             
             %%%%%%%%%%%%%%%%%%%%%%%%% ARGUMENT CHECKING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            byte = 0;
+            firstOut = 0;
+            
+            if (lick_port == 2)
+                firstOut = 68;
+            end
+            if (lick_port == 1)
+                firstOut = 58;
+            end
             
             % check arguments if a.chkp is true
             if a.chkp,
@@ -1731,7 +1741,7 @@ classdef arduino < handle
                 end
                 
                 % send mode and byte
-                fwrite(a.aser,[88 byte],'uchar');
+                fwrite(a.aser,[firstOut byte],'uchar');
                 
                 % get value back
                 val=fscanf(a.aser,'%d');
@@ -2296,6 +2306,7 @@ classdef arduino < handle
             end
             
         end % checkstr
+       
         
         function errstr=checkser(ser,chk)
             
