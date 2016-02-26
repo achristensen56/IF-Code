@@ -23,7 +23,7 @@ classdef ForcedChoice2 < handle
             % JP3
             p.corridor(2).step = 29;
             p.corridor(2).dose = 25;
-            p.corridor(2).dose_duration = 100; % ms
+            p.corridor(2).dose_duration = 80; % ms
             p.corridor(2).lick = 23;
             
             p.trial_out = 22;

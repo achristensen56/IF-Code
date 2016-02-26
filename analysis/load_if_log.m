@@ -1,5 +1,5 @@
 clear all; close all;
-saleae_source = 'c2m2_20160224-pm.csv';
+saleae_source = 'c2m2_20160225.csv';
 
 fprintf('%s: Statistics\n', saleae_source);
 trial_times = find_pulses(saleae_source, 0);
@@ -40,7 +40,7 @@ for bout_idx = 1:num_lick_bouts
     bout_times = lick_bouts(bout_idx,:);
     if (1 <= trial_idx) && (trial_idx <= num_trials)
         bout_times = bout_times - trial_start_times(trial_idx);
-        plot(bout_times, trial_idx*[1 1], '-', 'LineWidth', 3);
+        plot(bout_times, trial_idx*[1 1], 'b-', 'LineWidth', 3);
         hold on;
     end
 end
