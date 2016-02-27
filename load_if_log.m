@@ -1,8 +1,11 @@
 clear all; close all;
-saleae_source = 'c2m2_20160224-pm.csv';
+dir = '~/Dropbox/multisensory/Experiments/Behavior/cohort2/c2m1';
+saleae_source = 'c2m1_20160225.csv';
+
+
 
 fprintf('%s: Statistics\n', saleae_source);
-trial_times = find_pulses(saleae_source, 0);
+trial_times = find_pulses(fullfile(dir, saleae_source), 0);
 num_trials = size(trial_times, 1);
 
 trial_durations = trial_times(:,2)-trial_times(:,1);
@@ -15,7 +18,7 @@ fprintf('  Detected %d trials...\n', num_trials);
 fprintf('    Average trial length: %.3f seconds...\n', mean_trial_duration);
 fprintf('    Average time between_trials: %.3f seconds...\n', time_between_trials);
 
-lick_bouts = find_pulses(saleae_source, 2);
+lick_bouts = find_pulses(fullfile(dir, saleae_source), 2);
 num_lick_bouts = size(lick_bouts, 1);
 fprintf('  Detected %d lick bouts...\n', num_lick_bouts);
 
