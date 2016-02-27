@@ -1,6 +1,5 @@
- % Clear the workspace and the screen
-close all;
-clear all;
+function assocation2(choice)
+
 sca; 
 rand('seed', sum(100*clock));
 
@@ -12,10 +11,11 @@ rand('seed', sum(100*clock));
 
 % Here we call some default settings for setting up Psychtoolbox
 PsychDefaultSetup(2);
+Screen('Preference', 'SkipSyncTests', 1);
 screens = Screen('Screens');
 
 %try different screen numbers.
-screenNumber = max(screens);
+screenNumber = 1;
 white = WhiteIndex(screenNumber);
 black = BlackIndex(screenNumber);
 
@@ -36,7 +36,7 @@ beepPauseTime = 1;
 startCue = 0;
 waitForDeviceStart = 1;
 %trydifferent device ID's
-pahandle = PsychPortAudio('Open', 2, 1, 1, freq, nrchannels);
+pahandle = PsychPortAudio('Open', 1, 1, 1, freq, nrchannels);
 PsychPortAudio('Volume', pahandle, 0.5);
 myBeep = MakeBeep(500, beepLengthSecs, freq);
 PsychPortAudio('FillBuffer', pahandle, [myBeep; myBeep]);
@@ -85,7 +85,7 @@ centeredRect = CenterRectOnPointd(baseRect, xCenter, yCenter);
 topPriorityLevel = MaxPriority(window);
 Priority(topPriorityLevel);
 
-choice = ForcedChoice2('/dev/cu.usbmodem1411');
+% choice = ForcedChoice2('COM3');
 
 lick_state = [0 0];
 
