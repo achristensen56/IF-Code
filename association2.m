@@ -1,6 +1,5 @@
- % Clear the workspace and the screen
-close all;
-clear all;
+function assocation2(choice)
+
 sca; 
 rand('seed', sum(100*clock));
 
@@ -86,7 +85,7 @@ centeredRect = CenterRectOnPointd(baseRect, xCenter, yCenter);
 topPriorityLevel = MaxPriority(window);
 Priority(topPriorityLevel);
 
-choice = ForcedChoice2('COM3');
+% choice = ForcedChoice2('COM3');
 
 lick_state = [0 0];
 
