@@ -68,7 +68,7 @@ timing = struct(...
     'tone_delay', 0.5,... % Delay between end of tone and visual stimulus
     'stimulus_delay', 0,... % Delay between visual stimulus and response window
     'response_window', 2,...
-    'iti', 5);
+    'iti', 3);
     
 
 % Open an on screen window using PsychImaging and color it black.
