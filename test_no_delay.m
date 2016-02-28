@@ -1,12 +1,6 @@
 function test_no_delay(choice)
 
-% Clear the workspace and the screen
-% close all;
-% clear all;
-% sca; 
 rand('seed', sum(100*clock));
-
-
 
 %----------------------------------------------------------------------
 %                       Visual Setup
@@ -88,10 +82,6 @@ centeredRect = CenterRectOnPointd(baseRect, xCenter, yCenter);
 topPriorityLevel = MaxPriority(window);
 Priority(topPriorityLevel);
 
-% choice = ForcedChoice2('COM3');
-
-lick_state = [0 0];
-
 figure(1)
 hold on
 
@@ -117,7 +107,7 @@ for trial = 1:numTrials
     Screen('FillRect', window, [0 0 0]);
     vbl = Screen('Flip', window);
     
-    
+    % START OF TRIAL
     choice.set_trial_out(1)
     PsychPortAudio('Start', pahandle, repetitions, startCue, waitForDeviceStart);    
     pause(.5)
@@ -194,12 +184,13 @@ for trial = 1:numTrials
         vbl = Screen('Flip', window);        
     end
     
-    pause(1)
+%     pause(0.5)
     
+    % Start of REWARD WINDOW
     choice.set_response_window(1);
-    PsychPortAudio('Start', pahandle, repetitions, startCue, waitForDeviceStart);    
-    pause(.1)
-    PsychPortAudio('Stop', pahandle);
+%     PsychPortAudio('Start', pahandle, repetitions, startCue, waitForDeviceStart);    
+%     pause(.1)
+%     PsychPortAudio('Stop', pahandle);
     
     dosed = false;
     tic;  
