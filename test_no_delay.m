@@ -1,6 +1,4 @@
-function test_no_delay(choice)
-
-rand('seed', sum(100*clock));
+function mrespMat = test_no_delay(choice)
 
 %----------------------------------------------------------------------
 %                       Visual Setup
@@ -55,11 +53,23 @@ rightKey = KbName('RightArrow');
 %                       Parameters and Data
 %----------------------------------------------------------------------
 
-numTrials = 200;
-trial_type = randi(2, [1 numTrials], 'uint32');
+numTrials = 200; % Should be even!
+trial_type = mod(randperm(numTrials),2) + 1; % Either 1 or 2
 ISI_vec = .15*ones([1 numTrials]);
+
+% Mouse response. Format: [trial-type, lick*, ISI]
+%   Lick*: 1 indicates no lick from mouse, 2 indicates lick
 mrespMat = nan(numTrials, 3);
 mrespMat(:, 2) = 1;
+
+% Timing parameters (in seconds)
+timing = struct(...
+    'tone_length', 0.5,...
+    'tone_delay', 0.5,...
+    'stimulus_delay', 0,...
+    'response_window', 2,...
+    'iti', 5);
+    
 
 % Open an on screen window using PsychImaging and color it black.
 [window, windowRect] = PsychImaging('OpenWindow', screenNumber, black);
@@ -82,39 +92,33 @@ centeredRect = CenterRectOnPointd(baseRect, xCenter, yCenter);
 topPriorityLevel = MaxPriority(window);
 Priority(topPriorityLevel);
 
-figure(1)
-hold on
+% Wait for user input to continue
+DrawFormattedText(window, 'Press Any Key to Begin', 'center', 'center', white );
+vbl = Screen('Flip', window);
+KbStrokeWait;
 
-for trial = 1:numTrials
-    
-    mrespMat(trial, 1) = trial_type(trial);
-    mrespMat(trial, 3) = ISI_vec(trial);
-    
-    if mod(trial, 3) == 0  
-        numone = sum(mrespMat(1:trial, 2) == 1);
-        numtwo = sum(mrespMat(:, 2) == 2);
-        percent = (sum(mrespMat(1:trial, 2) == mrespMat(1:trial , 1) )/ (trial));       
-        sprintf('Trial number: %i \n no go: %d \n go: %d \n Percent Correct: %i%% \n', trial, numone, numtwo, round(percent*100))
-        scatter(trial, (sum(mrespMat(trial-2:trial, 1) == mrespMat(trial-2:trial, 2)) / 2))
-    end
-    
-    
-    if trial == 1
-        DrawFormattedText(window, 'Press Any Key to Begin', 'center', 'center', white );
-        vbl = Screen('Flip', window);
-        KbStrokeWait;
-    end
+% Running counters
+num_hits = 0;
+num_miss = 0;
+num_false_alarm = 0;
+num_corr_rej = 0;
+
+for trial = 1:numTrials           
     Screen('FillRect', window, [0 0 0]);
     vbl = Screen('Flip', window);
     
-    % START OF TRIAL
+    % START OF TRIAL (tone)
+    %------------------------------------------------------------
     choice.set_trial_out(1)
     PsychPortAudio('Start', pahandle, repetitions, startCue, waitForDeviceStart);    
-    pause(.5)
+    pause(timing.tone_length)
     PsychPortAudio('Stop', pahandle);
-    pause(.5)
+    if (timing.tone_delay > 0)
+        pause(timing.tone_delay)
+    end
     
-    
+    % VISUAL STIMULUS
+    %------------------------------------------------------------
     if trial_type(trial) == 1
         vbl = Screen('Flip', window);
         for frame = 1:numFrames
@@ -184,36 +188,71 @@ for trial = 1:numTrials
         vbl = Screen('Flip', window);        
     end
     
-%     pause(0.5)
+    if (timing.stimulus_delay > 0)
+        pause(timing.stimulus_delay);
+    end
     
-    % Start of REWARD WINDOW
+    % REWARD WINDOW
+    %------------------------------------------------------------
     choice.set_response_window(1);
 %     PsychPortAudio('Start', pahandle, repetitions, startCue, waitForDeviceStart);    
 %     pause(.1)
 %     PsychPortAudio('Stop', pahandle);
     
+    mouse_licked = false;
     dosed = false;
-    tic;  
-    while (toc < 2)
+    tic;
+    while (toc < timing.response_window)
         if (choice.is_licking(2))
-           mrespMat(trial, 2) = 2; 
-           needsToRespond = false;
-           if trial_type(trial) == 2
+           mouse_licked = true;
+           if (trial_type(trial) == 2) % GO trial
                if ~dosed
                   choice.dose(2)
                   dosed = true;
-               end
-           
-           else
-               %airpuff
+               end           
+           else % No go trial, do airpuff
               choice.dose(1)
            end
         end
     end
-    choice.set_response_window(0);
     
-    choice.set_trial_out(0)
-    pause(5)
+    choice.set_response_window(0);
+    choice.set_trial_out(0);
+    
+    % Record trial info and display stats
+    %------------------------------------------------------------
+    mrespMat(trial,1) = trial_type(trial); % Number of flashes
+    if mouse_licked
+        mrespMat(trial,2) = 2;
+    end
+    mrespMat(trial,3) = ISI_vec(trial); % THK: ???
+    
+    if (trial_type(trial) == 2) % GO
+        if mouse_licked
+            trial_result = 'HIT';
+            num_hits = num_hits + 1;
+        else
+            trial_result = 'MISS';
+            num_miss = num_miss + 1;
+        end
+    else % NOGO
+        if mouse_licked
+            trial_result = 'FALSE ALARM';
+            num_false_alarm = num_false_alarm + 1;
+        else
+            trial_result = 'CORRECT REJECTION';
+            num_corr_rej = num_corr_rej + 1;
+        end
+    end
+    
+    accuracy = 100*(num_hits + num_corr_rej) / trial;
+    fprintf('Trial %d of %d:\n', trial, numTrials);
+    fprintf('    %s (Num flashes=%d, Mouse lick=%d)\n',...
+        trial_result, mrespMat(trial,1), mouse_licked);
+    fprintf('    Running accuracy=%.1f%% (H=%d, CR=%d, FA=%d, M=%d)\n\n',...
+        accuracy, num_hits, num_corr_rej, num_false_alarm, num_miss);
+
+    pause(timing.iti);
 end
 
 Screen('Close?')
