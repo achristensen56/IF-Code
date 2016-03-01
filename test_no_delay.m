@@ -68,7 +68,8 @@ timing = struct(...
     'tone_delay', 0.5,... % Delay between end of tone and visual stimulus
     'stimulus_delay', 0,... % Delay between visual stimulus and response window
     'response_window', 2,...
-    'iti', 3);
+    'iti', 3,...
+    'timeout', 3);
     
 
 % Open an on screen window using PsychImaging and color it black.
@@ -227,6 +228,7 @@ for trial = 1:numTrials
     end
     mrespMat(trial,3) = ISI_vec(trial); % THK: ???
     
+    do_timeout = 0;
     if (trial_type(trial) == 2) % GO
         if mouse_licked
             trial_result = 'HIT';
@@ -239,6 +241,7 @@ for trial = 1:numTrials
         if mouse_licked
             trial_result = 'FALSE ALARM';
             num_false_alarm = num_false_alarm + 1;
+            do_timeout = 1;
         else
             trial_result = 'CORRECT REJECTION';
             num_corr_rej = num_corr_rej + 1;
@@ -246,14 +249,26 @@ for trial = 1:numTrials
     end
     
     accuracy = 100*(num_hits + num_corr_rej) / trial;
-    fprintf('Trial %d of %d:\n', trial, numTrials);
+    fprintf('\nTrial %d of %d:\n', trial, numTrials);
     fprintf('    %s (Num flashes=%d, Mouse lick=%d)\n',...
         trial_result, mrespMat(trial,1), mouse_licked);
-    fprintf('    Running accuracy=%.1f%% (H=%d, CR=%d, FA=%d, M=%d)\n\n',...
+    fprintf('    Running accuracy=%.1f%% (H=%d, CR=%d, FA=%d, M=%d)\n',...
         accuracy, num_hits, num_corr_rej, num_false_alarm, num_miss);
 
-    % TODO: Additional timeout delay when trial is wrong
-    pause(timing.iti);
+    % ITI & timeout
+    if (~do_timeout)
+        pause(timing.iti);
+    else
+        fprintf('  Starting TIMEOUT\n');
+        tic;
+        while (toc < timing.timeout)
+            if (choice.is_licking(2))
+                tic;
+                fprintf('    Detected lick; reset timeout timer!\n');
+            end
+        end
+        fprintf('  Finished TIMEOUT!\n');
+    end
 end
 
 Screen('Close?')
