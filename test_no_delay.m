@@ -69,7 +69,7 @@ timing = struct(...
     'stimulus_delay', 0,... % Delay between visual stimulus and response window
     'response_window', 2,...
     'iti', 3,...
-    'timeout', 3);
+    'timeout', 5);
     
 
 % Open an on screen window using PsychImaging and color it black.
@@ -259,15 +259,16 @@ for trial = 1:numTrials
     if (~do_timeout)
         pause(timing.iti);
     else
-        fprintf('  Starting TIMEOUT\n');
+        fprintf('    Starting TIMEOUT\n');
         tic;
         while (toc < timing.timeout)
             if (choice.is_licking(2))
                 tic;
-                fprintf('    Detected lick; reset timeout timer!\n');
+                choice.dose(1); % Air puff
+                fprintf('      %s: Detected lick; reset timeout timer!\n', datestr(now));
             end
         end
-        fprintf('  Finished TIMEOUT!\n');
+        fprintf('    Finished TIMEOUT!\n');
     end
 end
 
