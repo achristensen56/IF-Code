@@ -1,3 +1,4 @@
+
 classdef ForcedChoice2 < handle
     properties (SetAccess=private)
         params
