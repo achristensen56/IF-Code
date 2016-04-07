@@ -1,12 +1,7 @@
-clear all; close all;
-<<<<<<< HEAD:load_if_log.m
-dir = '~/Dropbox/multisensory/Experiments/Behavior/cohort2/c2m1';
-saleae_source = 'c2m1_20160225.csv';
+dir = 'C:\Users\herrin\Dropbox\multisensory\Experiments\Behavior\cohort2\c2m5';
+saleae_source = 'c2m5_20160307.csv';
 
 
-=======
-saleae_source = 'c2m2_20160225.csv';
->>>>>>> c48454c176b85017e271bd23c816d455406afbce:analysis/load_if_log.m
 
 fprintf('%s: Statistics\n', saleae_source);
 trial_times = find_pulses(fullfile(dir, saleae_source), 0);

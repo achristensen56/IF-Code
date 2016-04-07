@@ -24,16 +24,16 @@ count = PsychPortAudio('GetOpenDeviceCount');
 devices = PsychPortAudio('GetDevices');
 
 nrchannels = 2;
-freq = 35000;
+freq = 60000;
 repetitions = 1;
-beepLengthSecs = .25;
+beepLengthSecs = .1;
 beepPauseTime = 1;
 startCue = 0;
 waitForDeviceStart = 1;
 %trydifferent device ID's
 pahandle = PsychPortAudio('Open', 1, 1, 1, freq, nrchannels);
 PsychPortAudio('Volume', pahandle, 0.5);
-myBeep = MakeBeep(500, beepLengthSecs, freq);
+myBeep = MakeBeep(3000, beepLengthSecs, freq);
 PsychPortAudio('FillBuffer', pahandle, [myBeep; myBeep]);
 
 
@@ -55,7 +55,7 @@ rightKey = KbName('RightArrow');
 
 numTrials = 200; % Should be even!
 trial_type = mod(randperm(numTrials),2) + 1; % Either 1 or 2
-ISI_vec = .15*ones([1 numTrials]);
+ISI_vec = .7*ones([1 numTrials]);
 
 % Mouse response. Format: [trial-type, lick*, ISI]
 %   Lick*: 1 indicates no lick from mouse, 2 indicates lick
@@ -64,12 +64,16 @@ mrespMat(:, 2) = 1;
 
 % Timing parameters (in seconds)
 timing = struct(...
-    'tone_length', 0.5,...
-    'tone_delay', 0.5,... % Delay between end of tone and visual stimulus
+    'tone_length', 0.25,...
+    'tone_delay', 0.25,... % Delay between end of tone and visual stimulus
     'stimulus_delay', 0,... % Delay between visual stimulus and response window
     'response_window', 2,...
-    'iti', 3,...
-    'timeout', 3);
+    'iti', 4,...
+    'timeout', 1);
+
+%should we puff the mouse if he/she licks during times that aren't the
+%response window?
+force_trial_structure = false;
     
 
 % Open an on screen window using PsychImaging and color it black.
@@ -77,7 +81,7 @@ timing = struct(...
 % Measure the vertical refresh rate of the monitor
 ifi = Screen('GetFlipInterval', window);
 % Length of time and number of frames we will use for each drawing test
-numSecs = .04;
+numSecs = .5;
 numFrames = round(numSecs / ifi);
 ISIFrames = round(ISI_vec ./ ifi);
 waitframes = 1;
@@ -85,7 +89,7 @@ waitframes = 1;
 %Make the stimulus rectangle
 [screenXpixels, screenYpixels] = Screen('WindowSize', window);
 [xCenter, yCenter] = RectCenter(windowRect);
-baseRect = [0 0 500 500];
+baseRect = [0 0 600 600];
 rectColor = [1 1 1];
 centeredRect = CenterRectOnPointd(baseRect, xCenter, yCenter);
  
@@ -110,12 +114,19 @@ for trial = 1:numTrials
     
     % START OF TRIAL (tone)
     %------------------------------------------------------------
-    choice.set_trial_out(1)
+    choice.set_trial_out(1);
     PsychPortAudio('Start', pahandle, repetitions, startCue, waitForDeviceStart);    
     pause(timing.tone_length)
     PsychPortAudio('Stop', pahandle);
     if (timing.tone_delay > 0)
-        pause(timing.tone_delay)
+        tic;
+        while (toc < timing.tone_delay)
+            if force_trial_structure
+                if choice.is_licking(2)
+                    choice.dose(1)
+                end
+            end
+        end     
     end
     
     % VISUAL STIMULUS
@@ -132,7 +143,13 @@ for trial = 1:numTrials
 
             % Flip to the screen
             vbl = Screen('Flip', window, vbl + (waitframes - 0.5) * ifi);
-
+                    
+            if force_trial_structure
+                if choice.is_licking(2)
+                    choice.dose(1)
+                end
+            end
+   
         end
         vbl = Screen('Flip', window);     
         for frame = 1:ISIFrames(trial)
@@ -144,6 +161,12 @@ for trial = 1:numTrials
 
             %Flip to screen
             vbl = Screen('Flip', window, vbl + (waitframes - 0.5)*ifi);
+            
+            if force_trial_structure
+                if choice.is_licking(2)
+                    choice.dose(1)
+                end
+            end
         end
         vbl = Screen('Flip', window);   
     end
@@ -160,6 +183,12 @@ for trial = 1:numTrials
 
             % Flip to the screen
             vbl = Screen('Flip', window, vbl + (waitframes - 0.5) * ifi);
+            
+            if force_trial_structure
+                if choice.is_licking(2)
+                    choice.dose(1)
+                end
+            end
 
         end
         vbl = Screen('Flip', window);    
@@ -172,6 +201,12 @@ for trial = 1:numTrials
 
             %Flip to screen
             vbl = Screen('Flip', window, vbl + (waitframes - 0.5)*ifi);
+            
+            if force_trial_structure
+                if choice.is_licking(2)
+                    choice.dose(1)
+                end
+            end
         end
         vbl = Screen('Flip', window);
         for frame = 1:numFrames
@@ -184,9 +219,47 @@ for trial = 1:numTrials
 
             % Flip to the screen
             vbl = Screen('Flip', window, vbl + (waitframes - 0.5) * ifi);
-
+            if force_trial_structure
+                if choice.is_licking(2)
+                    choice.dose(1)
+                end
+            end
         end
-        vbl = Screen('Flip', window);        
+        vbl = Screen('Flip', window);     
+        for frame = 1:ISIFrames(trial)
+            %draw black screen     
+            Screen('FillRect', window, [0 0 0]);
+
+            %no more drawing commands until next filp
+            Screen('DrawingFinished', window);
+
+            %Flip to screen
+            vbl = Screen('Flip', window, vbl + (waitframes - 0.5)*ifi);
+            
+            if force_trial_structure
+                if choice.is_licking(2)
+                    choice.dose(1)
+                end
+            end
+        end
+        vbl = Screen('Flip', window);
+        for frame = 1:numFrames
+
+            % draw the rectangle
+            Screen('FillRect', window, rectColor, centeredRect);
+
+            % Tell PTB no more drawing commands will be issued until the next flip
+            Screen('DrawingFinished', window); 
+
+            % Flip to the screen
+            vbl = Screen('Flip', window, vbl + (waitframes - 0.5) * ifi);
+            if force_trial_structure
+                if choice.is_licking(2)
+                    choice.dose(1)
+                end
+            end
+        end
+        vbl = Screen('Flip', window);   
     end
     
     if (timing.stimulus_delay > 0)
@@ -195,10 +268,10 @@ for trial = 1:numTrials
     
     % REWARD WINDOW
     %------------------------------------------------------------
-    choice.set_response_window(1);
-%     PsychPortAudio('Start', pahandle, repetitions, startCue, waitForDeviceStart);    
-%     pause(.1)
-%     PsychPortAudio('Stop', pahandle);
+     choice.set_response_window(1);
+     PsychPortAudio('Start', pahandle, repetitions, startCue, waitForDeviceStart);    
+     pause(.1)
+     PsychPortAudio('Stop', pahandle);
     
     mouse_licked = false;
     dosed = false;
@@ -257,7 +330,15 @@ for trial = 1:numTrials
 
     % ITI & timeout
     if (~do_timeout)
-        pause(timing.iti);
+        tic;
+        while (toc < timing.iti)
+            if force_trial_structure
+                if choice.is_licking(2)
+                    choice.dose(1)
+                end
+            end
+
+        end
     else
         fprintf('    Starting TIMEOUT\n');
         tic;

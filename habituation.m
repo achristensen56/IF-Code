@@ -1,7 +1,7 @@
+function mrespMat = habituation(choice)
+
 % Clear the workspace and the screen
-close all;
-clear all;
-sca; 
+
 rand('seed', sum(100*clock));
 
 
@@ -12,7 +12,7 @@ rand('seed', sum(100*clock));
 
 % Here we call some default settings for setting up Psychtoolbox
 PsychDefaultSetup(2);
-screens = Screen('Screens');
+screens = Screen('Screens')-1;
 screenNumber = max(screens);
 white = WhiteIndex(screenNumber);
 black = BlackIndex(screenNumber);
@@ -34,7 +34,7 @@ beepPauseTime = 1;
 startCue = 0;
 waitForDeviceStart = 1;
 %trydifferent device ID's
-pahandle = PsychPortAudio('Open', 2, 1, 1, freq, nrchannels);
+pahandle = PsychPortAudio('Open', 1, 1, 1, freq, nrchannels);
 PsychPortAudio('Volume', pahandle, 0.5);
 myBeep = MakeBeep(500, beepLengthSecs, freq);
 PsychPortAudio('FillBuffer', pahandle, [myBeep; myBeep]);
@@ -54,10 +54,19 @@ leftKey = KbName('LeftArrow');
 %                       Parameters and Data
 %----------------------------------------------------------------------
 
-numTrials = 100;
+numTrials = 60;
 %trial_type = 2;
 ISI_vec = .3*ones(1,numTrials + 1);
 respMat = nan(3, numTrials);
+
+timing = struct(...
+    'tone_length', 0.25,...
+    'tone_delay', 0.25,... % Delay between end of tone and visual stimulus
+    'stimulus_delay', 0,... % Delay between visual stimulus and response window
+    'response_window', 2,...
+    'iti', 4,...
+    'timeout', randi([1 4], numTrials));
+
 
 % Open an on screen window using PsychImaging and color it black.
 [window, windowRect] = PsychImaging('OpenWindow', screenNumber, black);
@@ -80,15 +89,12 @@ centeredRect = CenterRectOnPointd(baseRect, xCenter, yCenter);
 topPriorityLevel = MaxPriority(window);
 Priority(topPriorityLevel);
 
-choice = ForcedChoice2('/dev/cu.usbmodem1411');
-
 lick_state = [0 0];
 
 numspoutone = 0;
 numspouttwo = 0;
 
 for trial = 1:numTrials
-    trial
     
     if trial == 1
         DrawFormattedText(window, 'Press Any Key to Begin', 'center', 'center', white );
@@ -101,63 +107,107 @@ for trial = 1:numTrials
     
         
     choice.set_trial_out(1)
-    PsychPortAudio('Start', pahandle, repetitions, startCue, waitForDeviceStart);    
-    pause(.5)
-    PsychPortAudio('Stop', pahandle);
-    pause(.5)
+    RESPONSE = false;
+    tic;
+    while(RESPONSE == false && toc < 5)
+        %stimulus presentation
+        
+        vbl = Screen('Flip', window);
+        for frame = 1:numFrames
+            if (toc > .5)
+                if (choice.is_licking(2))
+                    choice.dose(2)
+                    RESPONSE = true;
+                    break;
+                end
+            end
 
-    vbl = Screen('Flip', window);
-    for frame = 1:numFrames
+            % draw the rectangle
+            Screen('FillRect', window, rectColor, centeredRect);
 
-        % draw the rectangle
-        Screen('FillRect', window, rectColor, centeredRect);
+            % Tell PTB no more drawing commands will be issued until the next flip
+            Screen('DrawingFinished', window); 
 
-        % Tell PTB no more drawing commands will be issued until the next flip
-        Screen('DrawingFinished', window); 
+            % Flip to the screen
+            vbl = Screen('Flip', window, vbl + (waitframes - 0.5) * ifi);
 
-        % Flip to the screen
-        vbl = Screen('Flip', window, vbl + (waitframes - 0.5) * ifi);
+        end
+        if (RESPONSE == true)
+            break;
+        end
+        
+        vbl = Screen('Flip', window);    
+        for frame = 1:ISIFrames(trial)
+            if (toc > .5)
+                if (choice.is_licking(2))
+                    choice.dose(2)
+                    RESPONSE = true;
+                    break;
+                end
+            end
+            %draw black screen     
+            Screen('FillRect', window, [0 0 0]);
 
+            %no more drawing commands until next filp
+            Screen('DrawingFinished', window);
+
+            %Flip to screen
+            vbl = Screen('Flip', window, vbl + (waitframes - 0.5)*ifi);
+        end
+        if (RESPONSE == true)
+            break;
+        end
+        vbl = Screen('Flip', window);
+        for frame = 1:numFrames
+
+            if (toc > .5)
+                if (choice.is_licking(2))
+                    choice.dose(2)
+                    RESPONSE = true;
+                    break;
+                end
+            end
+            % draw the rectangle
+            Screen('FillRect', window, rectColor, centeredRect);
+
+            % Tell PTB no more drawing commands will be issued until the next flip
+            Screen('DrawingFinished', window); 
+
+            % Flip to the screen
+            vbl = Screen('Flip', window, vbl + (waitframes - 0.5) * ifi);
+
+        end
+        vbl = Screen('Flip', window); 
+        
+        if (RESPONSE == true)
+            break;
+        end
+        
+        if (toc > .5)
+            if (choice.is_licking(2))
+                choice.dose(2)
+                RESPONSE = true;
+                break;
+            end
+        end
+                
     end
-    vbl = Screen('Flip', window);    
-    for frame = 1:ISIFrames(trial)
-        %draw black screen     
-        Screen('FillRect', window, [0 0 0]);
-
-        %no more drawing commands until next filp
-        Screen('DrawingFinished', window);
-
-        %Flip to screen
-        vbl = Screen('Flip', window, vbl + (waitframes - 0.5)*ifi);
-    end
-    vbl = Screen('Flip', window);
-    for frame = 1:numFrames
-
-        % draw the rectangle
-        Screen('FillRect', window, rectColor, centeredRect);
-
-        % Tell PTB no more drawing commands will be issued until the next flip
-        Screen('DrawingFinished', window); 
-
-        % Flip to the screen
-        vbl = Screen('Flip', window, vbl + (waitframes - 0.5) * ifi);
-
-    end
-    vbl = Screen('Flip', window); 
-    
-    pause(1)
-    
-    choice.set_response_window(1);
-    PsychPortAudio('Start', pahandle, repetitions, startCue, waitForDeviceStart);    
-    pause(.1)
-    PsychPortAudio('Stop', pahandle);
-    choice.dose(2)
-    pause(2)
-    choice.set_response_window(0);
+    pause(2) %response window
+   
     choice.set_trial_out(0);
     
-    
-    pause(3)    
+    %adaptive timeout
+    fprintf('    Starting TIMEOUT\n');
+    tic;
+    while (toc < timing.timeout(trial))
+        if (choice.is_licking(2))
+            tic;                
+            %choice.dose(1); % Air puff
+            fprintf('      %s: Detected lick; reset timeout timer!\n', datestr(now));
+        end
+    end
+    fprintf('    Finished TIMEOUT!\n');
+        
 end
 
 Screen('Close?')
