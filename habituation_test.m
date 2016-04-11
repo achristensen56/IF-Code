@@ -1,4 +1,4 @@
-function mrespMat = habituation(choice)
+function mrespMat = habituation_test(choice)
 
 % Clear the workspace and the screen
 
@@ -54,8 +54,9 @@ leftKey = KbName('LeftArrow');
 %                       Parameters and Data
 %----------------------------------------------------------------------
 
-numTrials = 80;
-%trial_type = 2;
+numTrials = 200;
+trial_type = [ones([1, .6*numTrials]), 1+ ones([1, .4*numTrials])]; % Either 1 or 2
+trial_type = trial_type(randperm(numTrials));
 ISI_vec = .3*ones(1,numTrials + 1);
 respMat = nan(3, numTrials);
 
@@ -66,6 +67,12 @@ timing = struct(...
     'response_window', 2,...
     'iti', 4,...
     'timeout', randi([1 4], numTrials));
+
+% Running counters
+num_hits = 0;
+num_miss = 0;
+num_false_alarm = 0;
+num_corr_rej = 0;
 
 
 % Open an on screen window using PsychImaging and color it black.
@@ -102,14 +109,21 @@ for trial = 1:numTrials
         KbStrokeWait;
     end
     
-    Screen('FillRect', window, [0 0 0]);
-    vbl = Screen('Flip', window);
-    
-        
     choice.set_trial_out(1)
-    RESPONSE = false;
-    tic;
-    while(RESPONSE == false && toc < 5)
+    RESPOND = false;
+    
+    if trial_type(trial) == 2
+        tic;
+        Screen('FillRect', window, rectColor, centeredRect);
+        vbl = Screen('Flip', window);
+        while toc < 2
+            if choice.is_licking(2)
+                RESPOND = true;
+            end
+        end    
+    else
+        tic;
+         while(RESPOND == false && toc < 2)
         %stimulus presentation
         
         vbl = Screen('Flip', window);
@@ -117,7 +131,7 @@ for trial = 1:numTrials
             if (toc > .5)
                 if (choice.is_licking(2))
                     choice.dose(2)
-                    RESPONSE = true;
+                    RESPOND = true;
                     break;
                 end
             end
@@ -132,7 +146,7 @@ for trial = 1:numTrials
             vbl = Screen('Flip', window, vbl + (waitframes - 0.5) * ifi);
 
         end
-        if (RESPONSE == true)
+        if (RESPOND == true)
             break;
         end
         
@@ -141,7 +155,7 @@ for trial = 1:numTrials
             if (toc > .5)
                 if (choice.is_licking(2))
                     choice.dose(2)
-                    RESPONSE = true;
+                    RESPOND = true;
                     break;
                 end
             end
@@ -154,7 +168,7 @@ for trial = 1:numTrials
             %Flip to screen
             vbl = Screen('Flip', window, vbl + (waitframes - 0.5)*ifi);
         end
-        if (RESPONSE == true)
+        if (RESPOND == true)
             break;
         end
         vbl = Screen('Flip', window);
@@ -163,7 +177,7 @@ for trial = 1:numTrials
             if (toc > .5)
                 if (choice.is_licking(2))
                     choice.dose(2)
-                    RESPONSE = true;
+                    RESPOND = true;
                     break;
                 end
             end
@@ -179,23 +193,60 @@ for trial = 1:numTrials
         end
         vbl = Screen('Flip', window); 
         
-        if (RESPONSE == true)
+        if (RESPOND == true)
             break;
         end
         
-        if (toc > .5)
+        if (toc > .1)
             if (choice.is_licking(2))
                 choice.dose(2)
-                RESPONSE = true;
+                RESPOND = true;
                 break;
             end
         end
                 
+         end
     end
-    pause(2) %response window
-   
-    choice.set_trial_out(0);
     
+    
+    Screen('FillRect', window, [0 0 0]);
+    vbl = Screen('Flip', window); 
+    pause(2) %response window   
+    choice.set_trial_out(0);
+     mrespMat(trial,1) = trial_type(trial); % Number of flashes
+    if RESPOND
+       if trial_type(trial) == 2
+           pause(5)
+       end
+       mrespMat(trial,2) = 1;
+    end
+    
+     if (trial_type(trial) == 1) % GO
+        if RESPOND
+            trial_result = 'HIT';
+            num_hits = num_hits + 1;
+        else
+            trial_result = 'MISS';
+            num_miss = num_miss + 1;
+        end
+    else % NOGO
+        if RESPOND
+            trial_result = 'FALSE ALARM';
+            num_false_alarm = num_false_alarm + 1;
+            do_timeout = 1;
+        else
+            trial_result = 'CORRECT REJECTION';
+            num_corr_rej = num_corr_rej + 1;
+        end
+     end
+     
+    accuracy = 100*(num_hits + num_corr_rej) / trial;
+    fprintf('\nTrial %d of %d:\n', trial, numTrials);
+    fprintf('    %s (Num flashes=%d, Mouse lick=%d)\n',...
+        trial_result, mrespMat(trial,1), RESPOND);
+    fprintf('    Running accuracy=%.1f%% (H=%d, CR=%d, FA=%d, M=%d)\n',...
+    accuracy, num_hits, num_corr_rej, num_false_alarm, num_miss);
+      
     %adaptive timeout
     fprintf('    Starting TIMEOUT\n');
     tic;
