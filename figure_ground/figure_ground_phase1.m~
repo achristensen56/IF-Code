@@ -1,11 +1,6 @@
 function mRespMat = figure_ground_phase1(choice)
 
-% In Phase 1, the screen has a constant background and then gets a 
-% figure every trial. If the mouse licks in the response window (15
-% seconds) then the mouse gets a water reward. Following the reward, or the
-% end of a miss trial, there is a 3 second pause, and then an adaptive
-% timeout, where the mouse is forced to not lick for between 1 and 4
-% seconds, under penalty of having the timeout clock start over.
+% In Phase 1, the mouse
 
 
 %----------------------------------------------------------------------
@@ -70,7 +65,7 @@ timing = struct(...
     'stimulus_delay', 0,... % Delay between visual stimulus and response window
     'response_window', 2,...
     'iti', 4,...
-    'timeout', (rand(3,numTrials)+1)+4);
+    'timeout', ones(1, numTrials));
 
 %should we puff the mouse if he/she licks during times that aren't the
 %response window?
@@ -175,8 +170,8 @@ for trial = 1:numTrials
     fprintf('    Starting TIMEOUT\n');
     tic;
     while (toc < timing.timeout(trial))
-        if (choice.is_licking(2)) % lick
-            tic;  % reset clock             
+        if (choice.is_licking(2))
+            tic;                
             %choice.dose(1); % Air puff
             fprintf('      %s: Detected lick; reset timeout timer!\n', datestr(now));
         end

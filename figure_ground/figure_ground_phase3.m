@@ -1,6 +1,6 @@
 function mRespMat = figure_ground_phase1(choice)
 
-% In Phase 1, the screen has a constant background and then gets a 
+% In Phase 3, the screen has a constant background and then gets a 
 % figure every trial. If the mouse licks in the response window (15
 % seconds) then the mouse gets a water reward. Following the reward, or the
 % end of a miss trial, there is a 3 second pause, and then an adaptive
@@ -35,8 +35,7 @@ inc=contrast*(white-gray);
 %----------------------------------------------------------------------
 
 numTrials = 100; % Should be even!
-% FOR PHASE 1 SET TRIAL TYPE TO 2 (FIGURE) EVERY TIME
-trial_type = ones([1 numTrials])*2; %mod(randperm(numTrials),2) + 1; % Either 1 or 2
+trial_type = mod(randperm(numTrials),2) + 1; % Either 1 or 2
 ISI_vec = .7*ones([1 numTrials]);
 do_timeout = true;
 averageAngle = rand*2*pi;
