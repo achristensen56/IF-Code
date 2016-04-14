@@ -175,11 +175,10 @@ for trial = 1:numTrials
     %adaptive timeout
     fprintf('    Starting ADAPTIVE TIMEOUT\n');
     tic;
-    ATO = (rand(1)*2+1); %adaptive timout between 1 and 3
+    ATO = (rand(1)*2+1);
     if (trial_type(trial) == 1 && RESPOND)
-        ATO = ATO+2; % adaptive timeout between 3 and 5
-    end
-    while (toc < ATO) % between 1 and 3 seconds
+        ATO = ATO+2;
+    while (toc < ) % between 1 and 3 seconds
         if (choice.is_licking(2)) % lick
             tic;  % reset clock             
             %choice.dose(1); % Air puff
