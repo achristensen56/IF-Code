@@ -54,7 +54,6 @@ angularNoise = 2*pi/30;
 maxLength = 60; % pixels
 wFigure = 400; % figure width (pixels)
 hFigure = 400; % figure height
-xyGround = makeLines(round(numLines*windowRect(3)*windowRect(4)/(wFigure*hFigure)),angularNoise,averageAngle,maxLength,[0 800],[0 600]);
 
 
 % Mouse response. Format: [trial-type, lick*, ISI]
@@ -70,7 +69,7 @@ timing = struct(...
     'stimulus_delay', 0,... % Delay between visual stimulus and response window
     'response_window', 2,...
     'iti', 4,...
-    'timeout', (rand(3,numTrials)+1)+4);
+    'timeout', (rand(3,numTrials)+1));
 
 %should we puff the mouse if he/she licks during times that aren't the
 %response window?
@@ -101,6 +100,9 @@ KbStrokeWait;
 
 w = window;
 
+
+xyGround = makeLines(round(numLines*windowRect(3)*windowRect(4)/(wFigure*hFigure)),angularNoise,averageAngle,maxLength,[0 800],[0 600]);
+
 %----------------------------------------------------------------------
 %                       Run Trials
 %----------------------------------------------------------------------
@@ -128,7 +130,7 @@ for trial = 1:numTrials
     while(RESPOND == false && toc < maxResponseWindow) 
         % wait at least 0.5 seconds after stimulus
         if choice.is_licking(2) && toc > 0.5 % lick
-            choice.dose(2); % give reward (water)
+            choice.dose(2); fprintf('Reward given');% give reward (water)
             RESPOND = true;
             mrespMat(trial,2)=2; % record that mouse licked
             mrespMat(trial,3)=toc; % record reaction time
@@ -172,13 +174,15 @@ for trial = 1:numTrials
     accuracy, num_hits, num_corr_rej, num_false_alarm, num_miss);
       
     %adaptive timeout
-    fprintf('    Starting TIMEOUT\n');
+    fprintf('    Starting TIMEOUT of %d seconds\n', timing.timeout(trial));
+    fprintf('Lick times (seconds): ');
     tic;
+    
     while (toc < timing.timeout(trial))
         if (choice.is_licking(2)) % lick
             tic;  % reset clock             
             %choice.dose(1); % Air puff
-            fprintf('      %s: Detected lick; reset timeout timer!\n', datestr(now));
+            fprintf('%s,: ', datestr(now,'SS'));
         end
     end
     fprintf('    Finished TIMEOUT!\n');    
