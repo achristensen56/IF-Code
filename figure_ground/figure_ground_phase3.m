@@ -36,7 +36,7 @@ inc=contrast*(white-gray);
 %                       Parameters and Data
 %----------------------------------------------------------------------
 
-numTrials = 100; % Should be even!
+numTrials = 200; % Should be even!
 trial_type = mod(randperm(numTrials),2) + 1; % Either 1 or 2
 ISI_vec = .7*ones([1 numTrials]);
 do_timeout = true;
@@ -100,6 +100,7 @@ vbl = Screen('Flip', window);
 KbStrokeWait;
 
 w = window;
+xyGround = makeLines(round(numLines*windowRect(3)*windowRect(4)/(wFigure*hFigure)),angularNoise,averageAngle,maxLength,[0 800],[0 600]);
 
 %----------------------------------------------------------------------
 %                       Run Trials
@@ -110,7 +111,6 @@ for trial = 1:numTrials
     fprintf('    Starting trial %f', trial);
     
     % draw background
-    xyGround = makeLines(round(numLines*windowRect(3)*windowRect(4)/(wFigure*hFigure)),angularNoise,averageAngle,maxLength,[0 800],[0 600]);
     xyFigure = makeLines(numLines,angularNoise,averageAngle+pi/2,maxLength,[xCenter-wFigure/2 xCenter+wFigure/2],[yCenter-hFigure/2 yCenter+hFigure/2]);
     Screen('DrawLines', window, xyGround ,3 ,[0 0 0]);
 
@@ -128,8 +128,7 @@ for trial = 1:numTrials
     tic;
     while(RESPOND == false && toc < maxResponseWindow) 
         % wait at least 0.5 seconds after stimulus
-        if choice.is_licking(2) && toc > 0.5 % lick
-            choice.dose(2); % give reward (water)
+        if choice.is_licking(2) && toc > 0.1 % lick
             RESPOND = true;
             mrespMat(trial,2)=2; % record that mouse licked
             mrespMat(trial,3)=toc; % record reaction time
@@ -138,15 +137,14 @@ for trial = 1:numTrials
     
     % After mouse reports seeing the figure, or 15 seconds pass, show only
     % background (no figure)
-    Screen('DrawLines', window, xyGround ,3 ,[0 0 0]);
-    Screen('Flip',window);
+    % Screen('DrawLines', window, xyGround ,3 ,[0 0 0]);
+    % Screen('Flip',window);
   
-    % 3 second pause for mouse to lick up all the water
-    pause(3) 
     
     % update the running tally of responses
      if (trial_type(trial) == 2) % Go trial
         if RESPOND % if lick
+            choice.dose(2); % give reward (water)
             trial_result = 'HIT';
             num_hits = num_hits + 1;
         else % if didn't lick
@@ -163,6 +161,9 @@ for trial = 1:numTrials
             num_corr_rej = num_corr_rej + 1;
         end
      end
+     
+    % 3 second pause for mouse to lick up all the water
+    pause(3) 
      
     % Print statistics to screen
     accuracy = 100*(num_hits + num_corr_rej) / trial;
