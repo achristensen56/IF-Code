@@ -54,8 +54,8 @@ leftKey = KbName('LeftArrow');
 %                       Parameters and Data
 %----------------------------------------------------------------------
 
-numTrials = 200;
-trial_type = [ones([1, .6*numTrials]), 1+ ones([1, .4*numTrials])]; % Either 1 or 2
+numTrials = 140;
+trial_type = [ones([1, .5*numTrials]), 1+ ones([1, .5*numTrials])]; % Either 1 or 2
 trial_type = trial_type(randperm(numTrials));
 ISI_vec = .3*ones(1,numTrials + 1);
 respMat = nan(3, numTrials);
@@ -114,98 +114,98 @@ for trial = 1:numTrials
     
     if trial_type(trial) == 2
         tic;
-        Screen('FillRect', window, rectColor, centeredRect);
+        Screen('FillRect', window, .3*[1 1 1], centeredRect);
         vbl = Screen('Flip', window);
-        while toc < 2
-            if choice.is_licking(2)
+        while RESPOND == false && toc < 1
+            if choice.is_licking(2) && toc > .2
                 RESPOND = true;
             end
-        end    
+        end 
     else
         tic;
-         while(RESPOND == false && toc < 2)
+         while(RESPOND == false && toc < 1)
         %stimulus presentation
         
-        vbl = Screen('Flip', window);
-        for frame = 1:numFrames
-            if (toc > .5)
-                if (choice.is_licking(2))
-                    choice.dose(2)
-                    RESPOND = true;
-                    break;
+            vbl = Screen('Flip', window);
+            for frame = 1:numFrames
+                if (toc > .2)
+                    if (choice.is_licking(2))
+                        choice.dose(2)
+                        RESPOND = true;
+                        break;
+                    end
                 end
+
+                % draw the rectangle
+                Screen('FillRect', window, rectColor, centeredRect);
+
+                % Tell PTB no more drawing commands will be issued until the next flip
+                Screen('DrawingFinished', window); 
+
+                % Flip to the screen
+                vbl = Screen('Flip', window, vbl + (waitframes - 0.5) * ifi);
+
             end
-
-            % draw the rectangle
-            Screen('FillRect', window, rectColor, centeredRect);
-
-            % Tell PTB no more drawing commands will be issued until the next flip
-            Screen('DrawingFinished', window); 
-
-            % Flip to the screen
-            vbl = Screen('Flip', window, vbl + (waitframes - 0.5) * ifi);
-
-        end
-        if (RESPOND == true)
-            break;
-        end
-        
-        vbl = Screen('Flip', window);    
-        for frame = 1:ISIFrames(trial)
-            if (toc > .5)
-                if (choice.is_licking(2))
-                    choice.dose(2)
-                    RESPOND = true;
-                    break;
-                end
-            end
-            %draw black screen     
-            Screen('FillRect', window, [0 0 0]);
-
-            %no more drawing commands until next filp
-            Screen('DrawingFinished', window);
-
-            %Flip to screen
-            vbl = Screen('Flip', window, vbl + (waitframes - 0.5)*ifi);
-        end
-        if (RESPOND == true)
-            break;
-        end
-        vbl = Screen('Flip', window);
-        for frame = 1:numFrames
-
-            if (toc > .5)
-                if (choice.is_licking(2))
-                    choice.dose(2)
-                    RESPOND = true;
-                    break;
-                end
-            end
-            % draw the rectangle
-            Screen('FillRect', window, rectColor, centeredRect);
-
-            % Tell PTB no more drawing commands will be issued until the next flip
-            Screen('DrawingFinished', window); 
-
-            % Flip to the screen
-            vbl = Screen('Flip', window, vbl + (waitframes - 0.5) * ifi);
-
-        end
-        vbl = Screen('Flip', window); 
-        
-        if (RESPOND == true)
-            break;
-        end
-        
-        if (toc > .1)
-            if (choice.is_licking(2))
-                choice.dose(2)
-                RESPOND = true;
+            if (RESPOND == true)
                 break;
             end
-        end
+
+            vbl = Screen('Flip', window);    
+            for frame = 1:ISIFrames(trial)
+                if (toc > .5)
+                    if (choice.is_licking(2))
+                        choice.dose(2)
+                        RESPOND = true;
+                        break;
+                    end
+                end
+                %draw black screen     
+                Screen('FillRect', window, [0 0 0]);
+
+                %no more drawing commands until next filp
+                Screen('DrawingFinished', window);
+
+                %Flip to screen
+                vbl = Screen('Flip', window, vbl + (waitframes - 0.5)*ifi);
+            end
+            if (RESPOND == true)
+                break;
+            end
+            vbl = Screen('Flip', window);
+            for frame = 1:numFrames
+
+                if (toc > .5)
+                    if (choice.is_licking(2))
+                        choice.dose(2)
+                        RESPOND = true;
+                        break;
+                    end
+                end
+                % draw the rectangle
+                Screen('FillRect', window, rectColor, centeredRect);
+
+                % Tell PTB no more drawing commands will be issued until the next flip
+                Screen('DrawingFinished', window); 
+
+                % Flip to the screen
+                vbl = Screen('Flip', window, vbl + (waitframes - 0.5) * ifi);
+
+            end
+            vbl = Screen('Flip', window); 
+
+            if (RESPOND == true)
+                break;
+            end
+
+            if (toc > .1)
+                if (choice.is_licking(2))
+                    choice.dose(2)
+                    RESPOND = true;
+                    break;
+                end
+            end
                 
-         end
+        end
     end
     
     
@@ -213,7 +213,7 @@ for trial = 1:numTrials
     vbl = Screen('Flip', window); 
     pause(2) %response window   
     choice.set_trial_out(0);
-     mrespMat(trial,1) = trial_type(trial); % Number of flashes
+    mrespMat(trial,1) = trial_type(trial); % Number of flashes
     if RESPOND
        if trial_type(trial) == 2
            pause(5)

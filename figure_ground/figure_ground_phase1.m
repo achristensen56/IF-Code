@@ -69,7 +69,7 @@ timing = struct(...
     'stimulus_delay', 0,... % Delay between visual stimulus and response window
     'response_window', 2,...
     'iti', 4,...
-    'timeout', (rand(3,numTrials)+1));
+    'timeout', (ones(3,numTrials)+0.75*rand(3,numTrials)));
 
 %should we puff the mouse if he/she licks during times that aren't the
 %response window?
@@ -109,7 +109,8 @@ xyGround = makeLines(round(numLines*windowRect(3)*windowRect(4)/(wFigure*hFigure
 for trial = 1:numTrials
     % initialization 
     RESPOND = false; 
-    fprintf('    Starting trial %f', trial);
+    fprintf('Starting trial %d of %d:\n', trial, numTrials);
+     
     
     % draw background
     xyFigure = makeLines(numLines,angularNoise,averageAngle+pi/2,maxLength,[xCenter-wFigure/2 xCenter+wFigure/2],[yCenter-hFigure/2 yCenter+hFigure/2]);
@@ -124,16 +125,18 @@ for trial = 1:numTrials
         Screen('DrawLines', window, xyFigure ,3 ,[0 0 0]);
     end
     Screen('Flip',window);
-    
+    fprintf('Stimulus displayed -> ')
     % Response window, 15 seconds max
     tic;
     while(RESPOND == false && toc < maxResponseWindow) 
         % wait at least 0.5 seconds after stimulus
         if choice.is_licking(2) && toc > 0.5 % lick
-            choice.dose(2); fprintf('Reward given');% give reward (water)
+            reacTime = toc;
+            mrespMat(trial,2)=2; fprintf('Licked (RT: %.2f sec -> ', reacTime)% record that mouse licked
+            mrespMat(trial,3)=reacTime; % record reaction time
+            choice.dose(2); fprintf('Reward given -> ');% give reward (water)
             RESPOND = true;
-            mrespMat(trial,2)=2; % record that mouse licked
-            mrespMat(trial,3)=toc; % record reaction time
+
         end      
     end % end while
     
@@ -143,7 +146,8 @@ for trial = 1:numTrials
     Screen('Flip',window);
   
     % 3 second pause for mouse to lick up all the water
-    pause(3) 
+     fprintf('3 second pause for licking\n')
+     pause(3);
     
     % update the running tally of responses
      if (trial_type(trial) == 2) % Go trial
@@ -167,25 +171,26 @@ for trial = 1:numTrials
      
     % Print statistics to screen
     accuracy = 100*(num_hits + num_corr_rej) / trial;
-    fprintf('\nTrial %d of %d:\n', trial, numTrials);
-    fprintf('    %s (Num flashes=%d, Mouse lick=%d)\n',...
-        trial_result, mrespMat(trial,1), RESPOND);
-    fprintf('    Running accuracy=%.1f%% (H=%d, CR=%d, FA=%d, M=%d)\n',...
+    %fprintf('Trial %d of %d:\n', trial, numTrials);
+    %fprintf('%s (Num flashes=%d, Mouse lick=%d)\n',...
+        %trial_result, mrespMat(trial,1), RESPOND);
+    fprintf('Running accuracy=%.1f%% (H=%d, CR=%d, FA=%d, M=%d)\n',...
     accuracy, num_hits, num_corr_rej, num_false_alarm, num_miss);
       
     %adaptive timeout
-    fprintf('    Starting TIMEOUT of %d seconds\n', timing.timeout(trial));
-    fprintf('Lick times (seconds): ');
+    fprintf('Starting timeout of %.2f seconds. ', timing.timeout(trial));
+    %fprintf('Lick times (seconds): ');
     tic;
-    
+    totalATO = tic;
     while (toc < timing.timeout(trial))
         if (choice.is_licking(2)) % lick
             tic;  % reset clock             
             %choice.dose(1); % Air puff
-            fprintf('%s,: ', datestr(now,'SS'));
+            %fprintf('%s,: ', datestr(now,'SS'));
         end
     end
-    fprintf('    Finished TIMEOUT!\n');    
+    totalATO = toc(totalATO);
+    fprintf('Done. It took %.2f seconds!\n\n',totalATO);    
 end
 
 Screen('Close?')

@@ -106,9 +106,10 @@ xyGround = makeLines(round(numLines*windowRect(3)*windowRect(4)/(wFigure*hFigure
 %                       Run Trials
 %----------------------------------------------------------------------
 for trial = 1:numTrials
+    fprintf('\n\nTrial %d of %d:\n', trial, numTrials);
     % initialization 
     RESPOND = false; 
-    fprintf('    Starting trial %f', trial);
+    %fprintf('    Starting trial %f\n', trial);
     
     % draw background
     xyFigure = makeLines(numLines,angularNoise,averageAngle+pi/2,maxLength,[xCenter-wFigure/2 xCenter+wFigure/2],[yCenter-hFigure/2 yCenter+hFigure/2]);
@@ -129,6 +130,7 @@ for trial = 1:numTrials
     while(RESPOND == false && toc < maxResponseWindow) 
         % wait at least 0.5 seconds after stimulus
         if choice.is_licking(2) && toc > 0.1 % lick
+            %fprintf('Lick Detected\n');
             RESPOND = true;
             mrespMat(trial,2)=2; % record that mouse licked
             mrespMat(trial,3)=toc; % record reaction time
@@ -144,7 +146,7 @@ for trial = 1:numTrials
     % update the running tally of responses
      if (trial_type(trial) == 2) % Go trial
         if RESPOND % if lick
-            choice.dose(2); % give reward (water)
+            choice.dose(2); %fprintf('Reward given\n'); % give reward (water)
             trial_result = 'HIT';
             num_hits = num_hits + 1;
         else % if didn't lick
@@ -163,28 +165,30 @@ for trial = 1:numTrials
      end
      
     % 3 second pause for mouse to lick up all the water
+    Screen('DrawLines', window, xyGround ,3 ,[0 0 0]);
+    Screen('Flip',window);
     pause(3) 
      
     % Print statistics to screen
     accuracy = 100*(num_hits + num_corr_rej) / trial;
-    fprintf('\nTrial %d of %d:\n', trial, numTrials);
+    
     fprintf('    %s (Num flashes=%d, Mouse lick=%d)\n',...
         trial_result, mrespMat(trial,1), RESPOND);
     fprintf('    Running accuracy=%.1f%% (H=%d, CR=%d, FA=%d, M=%d)\n',...
     accuracy, num_hits, num_corr_rej, num_false_alarm, num_miss);
       
     %adaptive timeout
-    fprintf('    Starting ADAPTIVE TIMEOUT\n');
-    tic;
     ATO = (rand(1)*2+1); %adaptive timout between 1 and 3
-    if (trial_type(trial) == 1 && RESPOND)
+    if (trial_type(trial) == 1 && RESPOND) % if false alarm
         ATO = ATO+2; % adaptive timeout between 3 and 5
     end
+    fprintf('    Starting ADAPTIVE TIMEOUT of %f seconds\n',ATO);
+    tic;
     while (toc < ATO) % between 1 and 3 seconds
         if (choice.is_licking(2)) % lick
             tic;  % reset clock             
             %choice.dose(1); % Air puff
-            fprintf('      %s: Detected lick; reset timeout timer!\n', datestr(now));
+            fprintf('%s,: ', datestr(now,'SS'));
         end
     end
     fprintf('    Finished TIMEOUT!\n');    
