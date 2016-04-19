@@ -54,10 +54,10 @@ leftKey = KbName('LeftArrow');
 %                       Parameters and Data
 %----------------------------------------------------------------------
 
-numTrials = 140;
+numTrials = 160;
 trial_type = [ones([1, .5*numTrials]), 1+ ones([1, .5*numTrials])]; % Either 1 or 2
 trial_type = trial_type(randperm(numTrials));
-ISI_vec = .3*ones(1,numTrials + 1);
+ISI_vec = .25*ones(1,numTrials + 1);
 respMat = nan(3, numTrials);
 
 timing = struct(...
@@ -111,26 +111,29 @@ for trial = 1:numTrials
     
     choice.set_trial_out(1)
     RESPOND = false;
-    
+    DOSED = false;
     if trial_type(trial) == 2
         tic;
-        Screen('FillRect', window, .3*[1 1 1], centeredRect);
+        Screen('FillRect', window, .4*[1 1 1], centeredRect);
         vbl = Screen('Flip', window);
-        while RESPOND == false && toc < 1
-            if choice.is_licking(2) && toc > .2
+        while RESPOND == false && toc < .75
+            if choice.is_licking(2) && toc > .3
                 RESPOND = true;
             end
         end 
     else
         tic;
-         while(RESPOND == false && toc < 1)
+         while(RESPOND == false && toc < .75)
         %stimulus presentation
         
             vbl = Screen('Flip', window);
             for frame = 1:numFrames
-                if (toc > .2)
+                if (toc > .3)
                     if (choice.is_licking(2))
-                        choice.dose(2)
+                        if ~DOSED
+                            choice.dose(2);
+                            DOSED = true;
+                        end
                         RESPOND = true;
                         break;
                     end
@@ -152,10 +155,13 @@ for trial = 1:numTrials
 
             vbl = Screen('Flip', window);    
             for frame = 1:ISIFrames(trial)
-                if (toc > .5)
+                if (toc > .3)
                     if (choice.is_licking(2))
-                        choice.dose(2)
-                        RESPOND = true;
+                        if ~DOSED
+                            choice.dose(2);
+                            DOSED = true;
+                            RESPOND = true;
+                        end
                         break;
                     end
                 end
@@ -174,10 +180,13 @@ for trial = 1:numTrials
             vbl = Screen('Flip', window);
             for frame = 1:numFrames
 
-                if (toc > .5)
+                if (toc > .3)
                     if (choice.is_licking(2))
-                        choice.dose(2)
-                        RESPOND = true;
+                        if ~DOSED
+                            choice.dose(2);
+                            DOSED = true;
+                            RESPOND = true;
+                        end
                         break;
                     end
                 end
@@ -195,23 +204,24 @@ for trial = 1:numTrials
 
             if (RESPOND == true)
                 break;
-            end
-
-            if (toc > .1)
-                if (choice.is_licking(2))
-                    choice.dose(2)
-                    RESPOND = true;
-                    break;
-                end
-            end
-                
+            end 
         end
     end
     
     
     Screen('FillRect', window, [0 0 0]);
     vbl = Screen('Flip', window); 
-    pause(2) %response window   
+    
+    %extra response window
+    tic;
+    while(toc < 1)
+        if choice.is_licking(2) && ~DOSED;
+            RESPOND = true;        
+            if trial_type(trial) == 1 
+                choice.dose(2)
+            end
+        end
+    end
     choice.set_trial_out(0);
     mrespMat(trial,1) = trial_type(trial); % Number of flashes
     if RESPOND

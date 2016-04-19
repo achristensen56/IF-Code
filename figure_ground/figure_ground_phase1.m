@@ -34,7 +34,7 @@ inc=contrast*(white-gray);
 %                       Parameters and Data
 %----------------------------------------------------------------------
 
-numTrials = 100; % Should be even!
+numTrials = 130; % Should be even!
 % FOR PHASE 1 SET TRIAL TYPE TO 2 (FIGURE) EVERY TIME
 trial_type = ones([1 numTrials])*2; %mod(randperm(numTrials),2) + 1; % Either 1 or 2
 ISI_vec = .7*ones([1 numTrials]);

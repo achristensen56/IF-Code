@@ -22,6 +22,8 @@ classdef ForcedChoice2 < handle
             
             
             % JP3
+            % Callibration by Shai on 4/19/2016. dose_duration = 50 ms 
+            %   gives 130 doses per 1 mL (7.7 uL)
             p.corridor(2).step = 29;
             p.corridor(2).dose = 25;
             p.corridor(2).dose_duration = 50; % ms
